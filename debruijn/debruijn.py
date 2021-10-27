@@ -157,18 +157,20 @@ def get_sink_nodes(graph):
     return res
 
 
-def get_contigs(graph, starting_nodes, ending_nodes):
-    def contig_from_path(path):
-        contig = ""
-        for node_1, node_2 in zip(path[:-1], path[1:]):
-            contig += node_1[0] + node_2[-1]
-        return contig
+def get_contig_from_path(path):
+    contig = ""
+    for node_1, node_2 in zip(path[:-1], path[1:]):
+        contig += node_1[0]
+        contig += node_2[-1]
 
+
+def get_contigs(graph, starting_nodes, ending_nodes):
     res = []
     for start_node in starting_nodes:
         for end_node in ending_nodes:
-            paths = [(contig_from_path(path), len(path))
-                     for path in nx.all_simple_paths(graph, start_node, end_node)]
+            if nx.has_path(graph, start_node, end_node):
+                paths = [get_contig_from_path(path) for path in nx.all_simple_paths(
+                    graph, start_node, end_node)]
             res.append(paths)
     return res
 
@@ -179,7 +181,7 @@ def save_contigs(contigs_list, output_file):
 
 def fill(text, width=80):
     """Split text with a line return to respect fasta format"""
-    return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
+    return os.linesep.join(text[i: i+width] for i in range(0, len(text), width))
 
 
 def draw_graph(graph, graphimg_file):
