@@ -4,7 +4,7 @@ import os
 import networkx as nx
 import pickle
 from .context import debruijn
-#from .context import debruijn_comp
+# from .context import debruijn_comp
 from debruijn import read_fastq
 from debruijn import cut_kmer
 from debruijn import build_kmer_dict
@@ -43,7 +43,7 @@ def test_build_kmer_dict():
 
 def test_build_graph():
     file = open(os.path.abspath(os.path.join(
-        os.path.dirname(__file__), "kmer.pck")), 'rb')
+        os.path.dirname(__file__), "kmer.pck")), "rb")
     kmer_dict = pickle.load(file)
     graph = build_graph(kmer_dict)
     # TCAGAGA

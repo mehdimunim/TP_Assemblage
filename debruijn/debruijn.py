@@ -20,6 +20,7 @@ import os
 import sys
 import networkx as nx
 import matplotlib
+import matplotlib.pyplot as plt
 from operator import itemgetter
 import random
 random.seed(9001)
@@ -75,7 +76,7 @@ def read_fastq(fastq_file):
 
 
 def cut_kmer(read, kmer_size):
-    """ 
+    """
     Cut a sequence in kmers
     """
     for i in range(len(read) - kmer_size + 1):
@@ -98,7 +99,7 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 def build_graph(kmer_dict):
     digraph = nx.DiGraph()
-    for kmer in kmer_dict.keys():
+    for kmer in kmer_dict:
         sub_kmer1 = kmer[:-1]
         sub_kmer2 = kmer[1:]
         digraph.add_edge(sub_kmer1, sub_kmer2, weight=kmer_dict[kmer])
@@ -139,15 +140,25 @@ def solve_out_tips(graph, ending_nodes):
 
 
 def get_starting_nodes(graph):
-    pass
+    res = []
+    for node in graph:
+        preds = [node for node in graph.predecessors(node)]
+        if len(preds) == 0:
+            res.append(node)
+    return res
 
 
 def get_sink_nodes(graph):
-    pass
+    res = []
+    for node in graph:
+        succ = [node for node in graph.successors(node)]
+        if len(succ) == 0:
+            res.append(node)
+    return res
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    nx.all_simple_paths()
 
 
 def save_contigs(contigs_list, output_file):
@@ -176,7 +187,7 @@ def draw_graph(graph, graphimg_file):
     nx.draw_networkx_edges(graph, pos, edgelist=elarge, width=6)
     nx.draw_networkx_edges(graph, pos, edgelist=esmall, width=6, alpha=0.5,
                            edge_color='b', style='dashed')
-    #nx.draw_networkx(graph, pos, node_size=10, with_labels=False)
+    # nx.draw_networkx(graph, pos, node_size=10, with_labels=False)
     # save image
     plt.savefig(graphimg_file)
 

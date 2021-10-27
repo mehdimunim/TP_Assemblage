@@ -16,7 +16,9 @@ def main():
     len = 2
     dic = build_kmer_dict(seq, len)
     graph = build_graph(dic)
-    print(graph.edges)
+    pred = graph.predecessors("A")
+    for i in pred:
+        print(i)
 
 
 main()
