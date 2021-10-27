@@ -158,7 +158,19 @@ def get_sink_nodes(graph):
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    nx.all_simple_paths()
+    def contig_from_path(path):
+        contig = ""
+        for node_1, node_2 in zip(path[:-1], path[1:]):
+            contig += node_1[0] + node_2[-1]
+        return contig
+
+    res = []
+    for start_node in starting_nodes:
+        for end_node in ending_nodes:
+            paths = [(contig_from_path(path), len(path))
+                     for path in nx.all_simple_paths(graph, start_node, end_node)]
+            res.append(paths)
+    return res
 
 
 def save_contigs(contigs_list, output_file):
