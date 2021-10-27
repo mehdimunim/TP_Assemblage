@@ -8,3 +8,4 @@ def print_even(test_list):
 x = print_even([1, 2, 2, 2, 19, 38, 29])
 for i in x:
     print(i)
+
