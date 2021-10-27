@@ -23,7 +23,7 @@ def build_kmer_dict(seq, kmer_len):
 def main():
     seq = "ATTCGGGGCCA"
     len = 2
-    # for i in cut_kmer("ATTCGGGGSSA", 4):
+    # for i in cut_kmer(seq, 4):
     #    print(i)
     print(build_kmer_dict(seq, len))
 

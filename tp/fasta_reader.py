@@ -6,10 +6,7 @@ def fasta_reader(fasta):
 
 
 def main():
-    x = fasta_reader(
-        r"C:\Users\Mehdi\GitHub\TP_Assemblage\data\eva71_plus_perfect.fq")
-
-    for i in x:
+    for i in fasta_reader(r"C:\Users\Mehdi\GitHub\TP_Assemblage\data\eva71_plus_perfect.fq"):
         print(i)
 
 
