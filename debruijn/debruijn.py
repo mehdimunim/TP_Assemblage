@@ -18,11 +18,11 @@ from random import randint
 import argparse
 import os
 import sys
-import networkx as nx
-import matplotlib
-import matplotlib.pyplot as plt
 from operator import itemgetter
 import random
+import matplotlib.pyplot as plt
+import networkx as nx
+
 random.seed(9001)
 
 __author__ = "Mehdi MUNIM"
@@ -72,8 +72,8 @@ def read_fastq(fastq_file):
     """
     Read a multi-fastq file and yield the sequences.
     """
-    with open(fastq_file, "r+") as f:
-        for i, line in enumerate(f):
+    with open(fastq_file, "r+") as file:
+        for i, line in enumerate(file):
             if i % 4 == 1:
                 # remove trailing whitespaces
                 yield line.rstrip()
@@ -102,6 +102,9 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
+    """
+    Build a graph from kmer_dict
+    """
     digraph = nx.DiGraph()
     for kmer in kmer_dict:
         sub_kmer1 = kmer[:-1]
@@ -144,6 +147,9 @@ def solve_out_tips(graph, ending_nodes):
 
 
 def get_starting_nodes(graph):
+    """
+    Get the starting nodes of the graph
+    """
     res = []
     for node in graph:
         preds = [node for node in graph.predecessors(node)]
@@ -153,6 +159,9 @@ def get_starting_nodes(graph):
 
 
 def get_sink_nodes(graph):
+    """
+    Ge the sink nodes of the graph
+    """
     res = []
     for node in graph:
         succ = [node for node in graph.successors(node)]
@@ -173,6 +182,9 @@ def get_contig_from_path(path):
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
+    """
+    Get all contigs of the graph
+    """
     res = []
     # find all paths between starting and ending nodes
     for start_node in starting_nodes:
@@ -184,6 +196,9 @@ def get_contigs(graph, starting_nodes, ending_nodes):
 
 
 def save_contigs(contigs_list, output_file):
+    """
+    Save contigs to fasta file
+    """
     with open(output_file, "w+", newline="\n") as out:
         for i, contig in enumerate(contigs_list):
             # header
