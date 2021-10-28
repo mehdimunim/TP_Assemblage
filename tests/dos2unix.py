@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 """
-source : 
-# https://github.com/udacity/ud120-projects/issues/331
+source: https://github.com/udacity/ud120-projects/issues/331
     
-convert dos linefeeds (crlf) to unix (lf)
-usage: dos2unix.py
+convert DOS linefeeds (crlf) to UNIX (lf)
 """
-import sys
 original = r"C:\Users\Mehdi\GitHub\TP_Assemblage\tests\kmer.pck"
 destination = r"C:\Users\Mehdi\GitHub\TP_Assemblage\tests\kmer_new.pck"
 content = ''

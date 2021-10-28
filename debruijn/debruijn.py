@@ -69,9 +69,13 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
+    """
+    Read a multi-fastq file and yield the sequences.
+    """
     with open(fastq_file, "r+") as f:
         for i, line in enumerate(f):
             if i % 4 == 1:
+                # remove trailing whitespaces
                 yield line.rstrip()
 
 
@@ -158,6 +162,9 @@ def get_sink_nodes(graph):
 
 
 def get_contig_from_path(path):
+    """
+    Get the contig corresponding to the input path
+    """
     contig = ""
     contig += path[0]
     for node in path[1:]:
@@ -167,6 +174,7 @@ def get_contig_from_path(path):
 
 def get_contigs(graph, starting_nodes, ending_nodes):
     res = []
+    # find all paths between starting and ending nodes
     for start_node in starting_nodes:
         for end_node in ending_nodes:
             contigs = [get_contig_from_path(path) for path in nx.all_simple_paths(
@@ -176,7 +184,12 @@ def get_contigs(graph, starting_nodes, ending_nodes):
 
 
 def save_contigs(contigs_list, output_file):
-    pass
+    with open(output_file, "w+", newline="\n") as out:
+        for i, contig in enumerate(contigs_list):
+            # header
+            out.write(f">contig_{i} len={contig[1]}\n")
+            # sequence
+            out.write(fill(contig[0])+"\n")
 
 
 def fill(text, width=80):
