@@ -25,13 +25,13 @@ from operator import itemgetter
 import random
 random.seed(9001)
 
-__author__ = "Your Name"
+__author__ = "Mehdi MUNIM"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
+__credits__ = ["Mehdi MUNIM"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "Mehdi MUNIM"
+__email__ = "mehdi.munim@gmail.com"
 __status__ = "Developpement"
 
 
@@ -159,19 +159,19 @@ def get_sink_nodes(graph):
 
 def get_contig_from_path(path):
     contig = ""
-    for node_1, node_2 in zip(path[:-1], path[1:]):
-        contig += node_1[0]
-        contig += node_2[-1]
+    contig += path[0]
+    for node in path[1:]:
+        contig += node[-1]
+    return contig
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
     res = []
     for start_node in starting_nodes:
         for end_node in ending_nodes:
-            if nx.has_path(graph, start_node, end_node):
-                paths = [get_contig_from_path(path) for path in nx.all_simple_paths(
-                    graph, start_node, end_node)]
-            res.append(paths)
+            contigs = [get_contig_from_path(path) for path in nx.all_simple_paths(
+                graph, start_node, end_node)]
+            res += [(contig, len(contig)) for contig in contigs]
     return res
 
 
