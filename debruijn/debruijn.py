@@ -23,6 +23,7 @@ import pickle
 import random
 import matplotlib.pyplot as plt
 import networkx as nx
+from copy import deepcopy
 
 random.seed(9001)
 
@@ -153,7 +154,7 @@ def std(data):
         data: list
             numerical data
 
-    Return:
+    Returns:
     ------
         std: float
             standard deviation
@@ -161,9 +162,59 @@ def std(data):
     return statistics.stdev(data)
 
 
+def amax(data):
+    """
+    Return the indexes of the maxima in data.
+    """
+    max = 0
+    amax = []
+    for i, item in enumerate(data):
+        if max < item:
+            max = item
+            amax = [i]
+        elif max == item:
+            amax.append(i)
+    return amax
+
+
 def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    """
+    Compare input paths and remove all except the best one in terms of weight and length.
+
+    Parameters:
+    -----------
+        graph: networks.Digraph
+            input graph
+        path_list: list
+            list of paths
+        path_length: list
+            lengths of the path_list
+        weight_avg_list: list
+            average weigths of the paths
+        delete_entry_node, delete_sink_node: boolean
+            see remove_paths
+    """
+    # indexes of the best paths in list
+    indexes = []
+
+    if std(weight_avg_list) > 0:
+        # indexes of the paths with the highest weight
+        indexes = amax(weight_avg_list)
+    elif std(path_length) > 0:
+        # indexes of the paths with the highest length
+        indexes = amax(path_length)
+    else:
+        # random index
+        random.seed(9001)
+        indexes = [randint(len(path_list)-1)]
+
+    # keep best paths and remove the others
+    path_to_remove = deepcopy(path_list)
+    for index in indexes:
+        path_to_remove.pop(index)
+
+    return remove_paths(graph, path_to_remove, delete_entry_node, delete_sink_node)
 
 
 def path_average_weight(graph, path):
@@ -174,11 +225,48 @@ def path_average_weight(graph, path):
 
 
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+    """
+    Clean a bubble between ancestor and descendant in keeping the best path.
+    """
+    path_list = []
+    path_length = []
+    weight_avg_list = []
+
+    # get paths between ancestor and descendant
+    for path in nx.all_simple_paths(
+            graph, ancestor_node, descendant_node):
+        # path
+        path_list.append(path)
+        # path length
+        path_length.append(len(path))
+        # path average weight
+        weight_avg_list.append(path_average_weight(graph, path))
+
+    #  keep only the best path in the bubble
+    return select_best_path(graph, path_list, path_length, weight_avg_list)
 
 
 def simplify_bubbles(graph):
-    pass
+    """
+    Clean graph from all bubbles
+    """
+    bubble = False
+    ancestor_node = None
+    for node in graph:
+        pred_list = graph.predecessors(node)
+        if len(pred_list) < 1:
+            # get all combinations of 2 nodes in pred_list
+            for i, node1 in enumerate(pred_list):
+                for node2 in pred_list[1+i:]:
+                    ancestor_node = nx.lowest_common_ancestor(
+                        graph, node1, node2)
+                    if ancestor_node != None:
+                        bubble = True
+                        break
+        if bubble:
+            graph = simplify_bubbles((solve_bubble(ancestor_node, node)))
+
+    return graph
 
 
 def solve_entry_tips(graph, starting_nodes):

@@ -4,8 +4,9 @@ Cloned from https://github.com/aghozlane/debruijn-tp.git
 
 Changes on branch "mehdi"
 
-# Tests
+# Pytest
 python -m pytest --cov=debruijn -v
 
-# Syntax
+# Pylint
+cd debruijn;
 python -m pylint debruijn.py

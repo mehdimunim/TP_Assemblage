@@ -47,14 +47,26 @@ def get_contigs(graph, starting_nodes, ending_nodes):
             res.append(paths)
     return res
 
+
+def amax(data):
+    """
+    Return the index of the maximum in data. If several maxima, return the one with the smaller index.
+    """
+    max = 0
+    amax = 0
+    for i, item in enumerate(data):
+        if max < item:
+            max = item
+            amax = i
+    return amax
+
+
 def main():
-    seq = "ATTCGGGGCCA"
-    len = 2
-    dic = build_kmer_dict(seq, len)
-    graph = build_graph(dic)
-    pred = graph.predecessors("A")
-    for i in pred:
-        print(i)
+    mylist = [1, 2, 3, 4, 5]
+    print(amax(mylist))
+    mylist2 = [1, 6, 1, 1, 6]
+    mylist.pop()
+    print(amax(mylist2))
 
 
 main()

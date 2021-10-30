@@ -20,7 +20,7 @@ def main():
     list = [("AATTC", 10), ("AA"*100, 10), ("TTCCC"*5, 100)]
     #save_contigs(list, file)
     list = [1, 1, 2]
-    print(list[None:None])
+    print(list. .pop([0, 1]))
 
 
 main()
