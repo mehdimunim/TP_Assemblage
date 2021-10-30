@@ -19,6 +19,7 @@ import argparse
 import os
 import sys
 from operator import itemgetter
+import pickle
 import random
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -144,7 +145,20 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
 
 
 def std(data):
-    pass
+    """
+    Compute the standard deviation of data
+
+    Parameters:
+    ----------
+        data: list
+            numerical data
+
+    Return:
+    ------
+        std: float
+            standard deviation
+    """
+    return statistics.stdev(data)
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list,
@@ -181,7 +195,7 @@ def get_starting_nodes(graph):
     """
     res = []
     for node in graph:
-        preds = [node for node in graph.predecessors(node)]
+        preds = list(graph.predecessors(node))
         if len(preds) == 0:
             res.append(node)
     return res
@@ -193,7 +207,7 @@ def get_sink_nodes(graph):
     """
     res = []
     for node in graph:
-        succ = [node for node in graph.successors(node)]
+        succ = list(graph.successors(node))
         if len(succ) == 0:
             res.append(node)
     return res
