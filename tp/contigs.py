@@ -18,7 +18,9 @@ def fill(text, width=80):
 def main():
     file = r"C:\Users\Mehdi\GitHub\TP_Assemblage\tp\test.fastq"
     list = [("AATTC", 10), ("AA"*100, 10), ("TTCCC"*5, 100)]
-    save_contigs(list, file)
+    #save_contigs(list, file)
+    list = [1, 1, 2]
+    print(list[None:None])
 
 
 main()
