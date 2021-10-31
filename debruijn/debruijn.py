@@ -27,12 +27,12 @@ import networkx as nx
 
 random.seed(9001)
 
-__author__ = "Mehdi MUNIM"
+__author__ = "Mehdi MUNIM and Mamadou DANSOKHO"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Mehdi MUNIM"]
+__credits__ = ["Mehdi MUNIM and Mamadou DANSOKHO"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Mehdi MUNIM"
+__maintainer__ = "Mehdi MUNIM and Mamadou DANSOKHO"
 __email__ = "mehdi.munim@gmail.com"
 __status__ = "Developpement"
 
