@@ -1,6 +1,7 @@
 # Assembleur basé sur les graphes de Debruijn
 
 Cloned from https://github.com/aghozlane/debruijn-tp.git
+Done with Mamadou Dansokho @Md017
 
 Vous trouverez la description complète du TP [ici]( 
 https://docs.google.com/document/d/1P4v3bHbSurD7RXA-ldVwmtNKGvWsnBae51RMGye_KLs/edit?usp=sharing).
