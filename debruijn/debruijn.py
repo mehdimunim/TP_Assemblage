@@ -18,15 +18,12 @@ from random import randint
 import argparse
 import os
 import sys
-from operator import itemgetter
 import pickle
 import random
+from copy import deepcopy
 import matplotlib.pyplot as plt
 import networkx as nx
-from copy import deepcopy
-from networkx.classes.digraph import DiGraph
 
-from networkx.generators.classic import null_graph
 
 random.seed(9001)
 
@@ -163,22 +160,19 @@ def std(data):
         std: float
             standard deviation
     """
+    # no standard deviation with 0 or 1 points
+    if len(data) < 2:
+        return 0
     return statistics.stdev(data)
 
 
 def amax(data):
     """
-    Return the indexes of the maxima in data.
+    Return the indices of the maximum in data.
     """
-    max = 0
-    amax = []
-    for i, item in enumerate(data):
-        if max < item:
-            max = item
-            amax = [i]
-        elif max == item:
-            amax.append(i)
-    return amax
+    max_value = max(data)
+    indices = [index for index, val in enumerate(data) if val == max_value]
+    return indices
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list,
@@ -200,21 +194,21 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
             see remove_paths
     """
     # indexes of the best paths in list
-    indexes = []
+    indices = []
 
     if std(weight_avg_list) > 0:
-        # indexes of the paths with the highest weight
-        indexes = amax(weight_avg_list)
+        # indices of the paths with the highest weight
+        indices = amax(weight_avg_list)
     elif std(path_length) > 0:
-        # indexes of the paths with the highest length
-        indexes = amax(path_length)
+        # indices of the paths with the highest length
+        indices = amax(path_length)
     else:
         # random index
-        indexes = [randint(len(path_list)-1)]
+        indices = [randint(0, len(path_list)-1)]
 
     # keep best paths and remove the others
     path_to_remove = deepcopy(path_list)
-    for index in indexes:
+    for index in indices:
         path_to_remove.pop(index)
 
     return remove_paths(graph, path_to_remove, delete_entry_node, delete_sink_node)
@@ -263,12 +257,10 @@ def simplify_bubbles(graph):
     Clean graph from all bubbles
     """
     bubble = False
-    ancestor_node = None
-    current_node = None
     # search for the bubbles in the graph
     for node in graph:
-        pred_list = graph.predecessors(node)
-        if len(pred_list) < 1:
+        pred_list = list(graph.predecessors(node))
+        if len(pred_list) > 1:
             # get all combinations of 2 nodes in pred_list
             for i, node1 in enumerate(pred_list):
                 for node2 in pred_list[1+i:]:
@@ -277,61 +269,50 @@ def simplify_bubbles(graph):
                     # a bubble is detected
                     if ancestor_node != None:
                         bubble = True
-                        current_node = node
                         # break the for loop to clean the graph
                         break
+            if bubble:
+                break
     if bubble:
         # remove the bubble from the graph
-        graph = solve_bubble(ancestor_node, current_node)
+        graph = solve_bubble(graph, ancestor_node, node)
+        graph = simplify_bubbles(graph)
 
-        # redo bubble search on the cleaned graph
-        return simplify_bubbles(graph)
+    # redo bubble search on the cleaned graph
+    return graph
 
 
 def solve_entry_tips(graph, starting_nodes):
     """
     Remove entry tips from the graph
     """
-    tip = False
-    entry_node1 = None
-    entry_node2 = None
-    connected_node = None
-    for node in graph:
-        preds = list(graph.predecessors(node))
-
-        if len(preds) > 1:
-            for i, starting_node1 in enumerate(starting_nodes):
-                for starting_node2 in starting_nodes[1+i:]:
-                    if nx.has_path(graph, starting_node1, node) and nx.has_path(graph, starting_node2, node):
-                        tip = True
-                        entry_node1 = starting_node1
-                        entry_node2 = starting_node2
-                        connected_node = node
-                        break
+    for node in graph.nodes():
+        path_list = []
+        path_length = []
+        weight_avg_list = []
+        tip = False
+        predecessors_nodes_list = list(graph.predecessors(node))
+        if len(predecessors_nodes_list) > 1:
+            for starting_node in starting_nodes:
+                if nx.has_path(graph, starting_node, node):
+                    path = list(nx.all_simple_paths(
+                        graph, starting_node, node))
+                    path_list.append(path[0])
+                    path_length.append(len(path[0]))
+                    weight_avg_list.append(path_average_weight(graph, path[0]))
+                    tip = True
         if tip:
-            # compare path1 and path2 to look for the tip
-            # get necessary info for comparison
-            path_list1, path_length1, weight_avg_list1 = get_path_info(
-                graph, entry_node1, connected_node)
-            path_list2, path_length2, weight_avg_list2 = get_path_info(
-                graph, entry_node2, connected_node)
-            # merge info in the correct order
-            path_list = path_list1 + path_list2
-            path_length = path_length1 + path_length2
-            weight_avg_list = weight_avg_list1 + weight_avg_list2
-
-            # clean the graph
-            graph = select_best_path(
-                graph, path_list, path_length, weight_avg_list)
-            starting_nodes = get_starting_nodes(graph)
-
-            # redo tip detection on the cleaned graph
-            return solve_entry_tips(graph, starting_nodes)
+            break
+    if tip:
+        graph = select_best_path(
+            graph, path_list, path_length, weight_avg_list, delete_entry_node=True)
+        graph = solve_entry_tips(graph, starting_nodes)
+    return graph
 
 
 def solve_out_tips(graph, ending_nodes):
     """
-    Remove entry tips from the graph
+    Remove out tips from the graph
     """
     # come back to cleaning entry tips with the reverse graph
     reversed_graph = nx.DiGraph.reverse(graph)
@@ -464,15 +445,9 @@ def main():
     contig_list = get_contigs(graph, starting_nodes, ending_nodes)
     save_contigs(contig_list, args.output_file)
 
-    # Fonctions de dessin du graphe
-    # A decommenter si vous souhaitez visualiser un petit
-    # graphe
     # Plot the graph
-    # if args.graphimg_file:
-    #draw_graph(graph, args.graphimg_file)
-    # Save the graph in file
-    # if args.graph_file:
-    #    save_graph(graph, args.graph_file)
+    if args.graphimg_file:
+        draw_graph(graph, args.graphimg_file)
 
 
 if __name__ == '__main__':
