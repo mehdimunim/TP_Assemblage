@@ -24,6 +24,9 @@ import random
 import matplotlib.pyplot as plt
 import networkx as nx
 from copy import deepcopy
+from networkx.classes.digraph import DiGraph
+
+from networkx.generators.classic import null_graph
 
 random.seed(9001)
 
@@ -138,8 +141,9 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     end = None
     if not delete_sink_node:
         end = -1
-    elif not delete_entry_node:
+    if not delete_entry_node:
         start = 1
+
     for path in path_list:
         graph.remove_nodes_from(path[start:end])
     return graph
@@ -206,7 +210,6 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
         indexes = amax(path_length)
     else:
         # random index
-        random.seed(9001)
         indexes = [randint(len(path_list)-1)]
 
     # keep best paths and remove the others
@@ -224,23 +227,32 @@ def path_average_weight(graph, path):
     return statistics.mean([d["weight"] for (u, v, d) in graph.subgraph(path).edges(data=True)])
 
 
-def solve_bubble(graph, ancestor_node, descendant_node):
+def get_path_info(graph, src, dst):
     """
-    Clean a bubble between ancestor and descendant in keeping the best path.
+    Get the path list, the lengths and the average weights between src and dst nodes.
     """
     path_list = []
     path_length = []
     weight_avg_list = []
-
     # get paths between ancestor and descendant
     for path in nx.all_simple_paths(
-            graph, ancestor_node, descendant_node):
+            graph, src, dst):
         # path
         path_list.append(path)
         # path length
         path_length.append(len(path))
         # path average weight
         weight_avg_list.append(path_average_weight(graph, path))
+
+    return path_list, path_length, weight_avg_list
+
+
+def solve_bubble(graph, ancestor_node, descendant_node):
+    """
+    Clean a bubble between ancestor and descendant in keeping the best path.
+    """
+    path_list, path_length, weight_avg_list = get_path_info(
+        graph, ancestor_node, descendant_node)
 
     #  keep only the best path in the bubble
     return select_best_path(graph, path_list, path_length, weight_avg_list)
@@ -252,6 +264,8 @@ def simplify_bubbles(graph):
     """
     bubble = False
     ancestor_node = None
+    current_node = None
+    # search for the bubbles in the graph
     for node in graph:
         pred_list = graph.predecessors(node)
         if len(pred_list) < 1:
@@ -260,21 +274,69 @@ def simplify_bubbles(graph):
                 for node2 in pred_list[1+i:]:
                     ancestor_node = nx.lowest_common_ancestor(
                         graph, node1, node2)
+                    # a bubble is detected
                     if ancestor_node != None:
                         bubble = True
+                        current_node = node
+                        # break the for loop to clean the graph
                         break
-        if bubble:
-            graph = simplify_bubbles((solve_bubble(ancestor_node, node)))
+    if bubble:
+        # remove the bubble from the graph
+        graph = solve_bubble(ancestor_node, current_node)
 
-    return graph
+        # redo bubble search on the cleaned graph
+        return simplify_bubbles(graph)
 
 
 def solve_entry_tips(graph, starting_nodes):
-    pass
+    """
+    Remove entry tips from the graph
+    """
+    tip = False
+    entry_node1 = None
+    entry_node2 = None
+    connected_node = None
+    for node in graph:
+        preds = list(graph.predecessors(node))
+
+        if len(preds) > 1:
+            for i, starting_node1 in enumerate(starting_nodes):
+                for starting_node2 in starting_nodes[1+i:]:
+                    if nx.has_path(graph, starting_node1, node) and nx.has_path(graph, starting_node2, node):
+                        tip = True
+                        entry_node1 = starting_node1
+                        entry_node2 = starting_node2
+                        connected_node = node
+                        break
+        if tip:
+            # compare path1 and path2 to look for the tip
+            # get necessary info for comparison
+            path_list1, path_length1, weight_avg_list1 = get_path_info(
+                graph, entry_node1, connected_node)
+            path_list2, path_length2, weight_avg_list2 = get_path_info(
+                graph, entry_node2, connected_node)
+            # merge info in the correct order
+            path_list = path_list1 + path_list2
+            path_length = path_length1 + path_length2
+            weight_avg_list = weight_avg_list1 + weight_avg_list2
+
+            # clean the graph
+            graph = select_best_path(
+                graph, path_list, path_length, weight_avg_list)
+            starting_nodes = get_starting_nodes(graph)
+
+            # redo tip detection on the cleaned graph
+            return solve_entry_tips(graph, starting_nodes)
 
 
 def solve_out_tips(graph, ending_nodes):
-    pass
+    """
+    Remove entry tips from the graph
+    """
+    # come back to cleaning entry tips with the reverse graph
+    reversed_graph = nx.DiGraph.reverse(graph)
+    cleaned_reversed_graph = solve_entry_tips(reversed_graph, ending_nodes)
+    return nx.DiGraph.reverse(cleaned_reversed_graph)
 
 
 def get_starting_nodes(graph):
@@ -293,12 +355,9 @@ def get_sink_nodes(graph):
     """
     Ge the sink nodes of the graph
     """
-    res = []
-    for node in graph:
-        succ = list(graph.successors(node))
-        if len(succ) == 0:
-            res.append(node)
-    return res
+    # get the results on the
+    reversed_graph = nx.DiGraph.reverse(graph)
+    return get_starting_nodes(reversed_graph)
 
 
 def get_contig_from_path(path):
@@ -382,15 +441,38 @@ def main():
     # Get arguments
     args = get_arguments()
 
+    # build the kmer dictionary
+    kmer_dict = build_kmer_dict(args.fastq_file, args.kmer_size)
+    # build the de Bruijn graph from the dictionary
+    graph = build_graph(kmer_dict)
+    # solving bubbles
+    graph = simplify_bubbles(graph)
+
+    # getting entry and ending nodes
+    starting_nodes = get_starting_nodes(graph)
+    ending_nodes = get_sink_nodes(graph)
+
+    # solving out and entry tips
+    graph = solve_entry_tips(graph, starting_nodes)
+    graph = solve_out_tips(graph, ending_nodes)
+
+    # getting entry and ending nodes
+    starting_nodes = get_starting_nodes(graph)
+    ending_nodes = get_sink_nodes(graph)
+
+    # getting contigs
+    contig_list = get_contigs(graph, starting_nodes, ending_nodes)
+    save_contigs(contig_list, args.output_file)
+
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit
     # graphe
     # Plot the graph
     # if args.graphimg_file:
-    #     draw_graph(graph, args.graphimg_file)
+    #draw_graph(graph, args.graphimg_file)
     # Save the graph in file
     # if args.graph_file:
-    #     save_graph(graph, args.graph_file)
+    #    save_graph(graph, args.graph_file)
 
 
 if __name__ == '__main__':
